@@ -1,0 +1,110 @@
+.product-proof {
+  padding-top: 34px;
+}
+
+.product-shot {
+  margin: 34px 0 0;
+}
+
+.product-shot-frame {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: #e9edf4;
+  box-shadow: 0 28px 80px rgba(19, 27, 45, .12);
+}
+
+.product-shot-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.product-shot figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 13px;
+  color: var(--muted);
+  font-size: .88rem;
+}
+
+.product-shot figcaption strong {
+  color: var(--ink);
+  font-weight: 720;
+}
+
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.proof-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.proof-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #e9edf4;
+}
+
+.proof-card-copy {
+  padding: 22px;
+}
+
+.proof-card-copy h3 {
+  font-size: 1.22rem;
+}
+
+.proof-card-copy p {
+  margin: 9px 0 0;
+  color: var(--muted);
+}
+
+.proof-card-copy a {
+  display: inline-block;
+  margin-top: 14px;
+  text-decoration: none;
+  font-weight: 750;
+}
+
+.proof-card-copy a:hover {
+  text-decoration: underline;
+}
+
+.provenance {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  color: #687283;
+  font-size: .82rem;
+  font-weight: 650;
+}
+
+.provenance::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2f9e77;
+}
+
+@media (max-width: 760px) {
+  .proof-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-shot figcaption {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
