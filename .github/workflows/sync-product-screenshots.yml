@@ -1,0 +1,112 @@
+name: Sync product screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/local-product-screenshots
+    paths:
+      - site/assets/screenshots/.sync-trigger
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      ORIGIN_SCREENSHOT_TOKEN: ${{ secrets.ORIGIN_SCREENSHOT_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require private Origin read token
+        shell: bash
+        run: |
+          if [ -z "${ORIGIN_SCREENSHOT_TOKEN:-}" ]; then
+            echo "::error::ORIGIN_SCREENSHOT_TOKEN is required. Use a fine-grained token with read-only Contents access to KevinBusuttil/neuradix-origin."
+            exit 1
+          fi
+
+      - name: Download canonical product screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="site/assets/screenshots"
+          mkdir -p "$dest"
+
+          # Atlas is public. Its canonical marketing screenshot is generated
+          # from the production DashboardResultGrid in the Atlas repository.
+          curl --fail --location --retry 3 --retry-delay 2 \
+            "https://raw.githubusercontent.com/KevinBusuttil/mercantis.hub.flutter/main/test/marketing/goldens/atlas_owner_dashboard_1440x900.png" \
+            --output "$dest/atlas-owner-dashboard-1440x900.png"
+
+          # Origin is intentionally private. Copy the selected committed UI
+          # goldens through the authenticated GitHub Contents API, then serve
+          # only these public marketing copies from neuradix.com.
+          origin_commit="857646b943fe2da5cf48544508cdaaabe4e09297"
+          origin_path="apps/origin_desktop/test/golden/goldens"
+
+          fetch_origin() {
+            local source_name="$1"
+            local destination_name="$2"
+            curl --fail --location --retry 3 --retry-delay 2 \
+              -H "Accept: application/vnd.github.raw+json" \
+              -H "Authorization: Bearer ${ORIGIN_SCREENSHOT_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/KevinBusuttil/neuradix-origin/contents/${origin_path}/${source_name}?ref=${origin_commit}" \
+              --output "$dest/$destination_name"
+          }
+
+          fetch_origin "right_dock_face_selected_1920x1080.png" "origin-face-properties-1920x1080.png"
+          fetch_origin "parameters_expanded_1366x768.png" "origin-parameters-1366x768.png"
+          fetch_origin "sketch_dimensioned_1366x768.png" "origin-sketch-dimensioned-1366x768.png"
+
+      - name: Validate PNG signatures and dimensions
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import struct
+
+          expected = {
+              # The source filename predates the current golden renderer; the
+              # committed image is 1280x435. Validate the actual canonical PNG.
+              'atlas-owner-dashboard-1440x900.png': (1280, 435),
+              'origin-face-properties-1920x1080.png': (1920, 1080),
+              'origin-parameters-1366x768.png': (1366, 768),
+              'origin-sketch-dimensioned-1366x768.png': (1366, 768),
+          }
+          root = Path('site/assets/screenshots')
+          for name, dims in expected.items():
+              data = (root / name).read_bytes()
+              if data[:8] != b'\x89PNG\r\n\x1a\n':
+                  raise SystemExit(f'{name}: not a PNG')
+              width, height = struct.unpack('>II', data[16:24])
+              if (width, height) != dims:
+                  raise SystemExit(f'{name}: expected {dims}, got {(width, height)}')
+              print(f'{name}: {width}x{height}, {len(data)} bytes')
+          PY
+
+      - name: Ensure website pages do not hotlink product screenshots
+        shell: bash
+        run: |
+          if grep -R "raw.githubusercontent.com/KevinBusuttil/\(neuradix-origin\|mercantis.hub.flutter\)" site/*.html site/*/index.html 2>/dev/null; then
+            echo "::error::Product pages must use same-origin /assets/screenshots paths."
+            exit 1
+          fi
+
+      - name: Commit refreshed website assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add site/assets/screenshots/*.png
+          if git diff --cached --quiet; then
+            echo "Product screenshots are already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: refresh local product screenshots"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
