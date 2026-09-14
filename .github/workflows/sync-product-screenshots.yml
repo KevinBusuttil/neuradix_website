@@ -1,0 +1,83 @@
+name: Sync product screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/local-product-screenshots
+    paths:
+      - .github/workflows/sync-product-screenshots.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download pinned product screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="site/assets/screenshots"
+          mkdir -p "$dest"
+
+          curl --fail --location --retry 3 --retry-delay 2 \
+            "https://raw.githubusercontent.com/KevinBusuttil/mercantis.hub.flutter/main/test/marketing/goldens/atlas_owner_dashboard_1440x900.png" \
+            --output "$dest/atlas-owner-dashboard-1440x900.png"
+
+          origin_commit="857646b943fe2da5cf48544508cdaaabe4e09297"
+          origin_base="https://raw.githubusercontent.com/KevinBusuttil/neuradix-origin/${origin_commit}/apps/origin_desktop/test/golden/goldens"
+
+          curl --fail --location --retry 3 --retry-delay 2 \
+            "$origin_base/right_dock_face_selected_1920x1080.png" \
+            --output "$dest/origin-face-properties-1920x1080.png"
+          curl --fail --location --retry 3 --retry-delay 2 \
+            "$origin_base/parameters_expanded_1366x768.png" \
+            --output "$dest/origin-parameters-1366x768.png"
+          curl --fail --location --retry 3 --retry-delay 2 \
+            "$origin_base/sketch_dimensioned_1366x768.png" \
+            --output "$dest/origin-sketch-dimensioned-1366x768.png"
+
+      - name: Validate PNG signatures
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import struct
+
+          expected = {
+              'atlas-owner-dashboard-1440x900.png': (1440, 900),
+              'origin-face-properties-1920x1080.png': (1920, 1080),
+              'origin-parameters-1366x768.png': (1366, 768),
+              'origin-sketch-dimensioned-1366x768.png': (1366, 768),
+          }
+          root = Path('site/assets/screenshots')
+          for name, dims in expected.items():
+              data = (root / name).read_bytes()
+              if data[:8] != b'\x89PNG\r\n\x1a\n':
+                  raise SystemExit(f'{name}: not a PNG')
+              width, height = struct.unpack('>II', data[16:24])
+              if (width, height) != dims:
+                  raise SystemExit(f'{name}: expected {dims}, got {(width, height)}')
+              print(f'{name}: {width}x{height}, {len(data)} bytes')
+          PY
+
+      - name: Commit refreshed website assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add site/assets/screenshots/*.png
+          if git diff --cached --quiet; then
+            echo "Product screenshots are already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: localize product screenshots [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
