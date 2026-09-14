@@ -11,6 +11,8 @@ site/                   Public web root served by Nginx
   index.html
   assets/
   atlas/
+  manufacturing/
+  pos/
   origin/
   robotics/
   about/
@@ -24,6 +26,18 @@ deployment/             Server/deployment material; not web-accessible
   nginx-http.conf
   nginx-https.conf
 ```
+
+## Product-family positioning
+
+The website distinguishes the current Neuradix product directions and their maturity:
+
+- **Neuradix Atlas** — local-first ERP and business management, including lightweight manufacturing and a simpler integrated POS.
+- **Neuradix Manufacturing** — planned standalone manufacturing execution and shop-floor operations product, intended to connect to Atlas, ERPNext and other ERP systems.
+- **Neuradix POS** — planned dedicated advanced retail product for requirements beyond Atlas POS.
+- **Neuradix Origin** — local-first cross-discipline engineering platform in architecture validation.
+- **Neuradix Robotics Platform** — contract-driven robotics and automation platform at foundation-prototype stage.
+
+Manufacturing and POS are intentionally described as product directions until standalone commercial release evidence supports stronger claims.
 
 ## Production deployment
 
