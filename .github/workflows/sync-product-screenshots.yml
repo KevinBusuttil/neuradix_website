@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - codex/local-product-screenshots
+      - codex/refresh-atlas-marketing-image
     paths:
       - site/assets/screenshots/.sync-trigger
 
@@ -37,7 +38,7 @@ jobs:
           mkdir -p "$dest"
 
           # Atlas is public. Its canonical marketing screenshot is generated
-          # from the production DashboardResultGrid in the Atlas repository.
+          # from the real Atlas UI in the Atlas repository.
           curl --fail --location --retry 3 --retry-delay 2 \
             "https://raw.githubusercontent.com/KevinBusuttil/mercantis.hub.flutter/main/test/marketing/goldens/atlas_owner_dashboard_1440x900.png" \
             --output "$dest/atlas-owner-dashboard-1440x900.png"
@@ -71,9 +72,7 @@ jobs:
           import struct
 
           expected = {
-              # The source filename predates the current golden renderer; the
-              # committed image is 1280x435. Validate the actual canonical PNG.
-              'atlas-owner-dashboard-1440x900.png': (1280, 435),
+              'atlas-owner-dashboard-1440x900.png': (1440, 900),
               'origin-face-properties-1920x1080.png': (1920, 1080),
               'origin-parameters-1366x768.png': (1366, 768),
               'origin-sketch-dimensioned-1366x768.png': (1366, 768),
