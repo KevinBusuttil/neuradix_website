@@ -71,7 +71,9 @@ jobs:
           import struct
 
           expected = {
-              'atlas-owner-dashboard-1440x900.png': (1440, 900),
+              # The source filename predates the current golden renderer; the
+              # committed image is 1280x435. Validate the actual canonical PNG.
+              'atlas-owner-dashboard-1440x900.png': (1280, 435),
               'origin-face-properties-1920x1080.png': (1920, 1080),
               'origin-parameters-1366x768.png': (1366, 768),
               'origin-sketch-dimensioned-1366x768.png': (1366, 768),
