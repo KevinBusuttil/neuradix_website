@@ -2,6 +2,11 @@ name: Sync product screenshots
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - codex/local-product-screenshots
+    paths:
+      - site/assets/screenshots/.sync-trigger
 
 permissions:
   contents: write
