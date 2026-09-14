@@ -69,6 +69,17 @@
   color: var(--muted);
 }
 
+.proof-card-copy a {
+  display: inline-block;
+  margin-top: 14px;
+  text-decoration: none;
+  font-weight: 750;
+}
+
+.proof-card-copy a:hover {
+  text-decoration: underline;
+}
+
 .provenance {
   display: inline-flex;
   align-items: center;
